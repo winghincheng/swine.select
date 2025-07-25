@@ -31,7 +31,7 @@ with st.form("entry_form"):
     submitted = st.form_submit_button("Add Entry")
 
 if submitted:
-    if not swine_id.isdigit() or len(swine_id) != 10:
+    if not swine_id.isdigit() or len(swine_id) > 10:
         st.error("ID must be exactly 10 digits.")
     elif not location:
         st.error("Location is required.")
