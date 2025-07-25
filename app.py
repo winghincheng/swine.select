@@ -53,18 +53,19 @@ if submitted:
 if st.session_state.data:
     search_input = st.text_input("🔍 Search by Tag ID")
     df = pd.DataFrame(st.session_state.data, columns=["Location", "Tag ID", "ID", "Breed", "BT", "Comment"])
+
+    # Always initialize highlight column
+    df["_highlight"] = ""
+
     if search_input:
         if search_input in df["Tag ID"].values:
             df["_highlight"] = df["Tag ID"].apply(lambda x: "background-color: yellow" if x == search_input else "")
             st.success(f"Found entry for {search_input}")
         else:
-            df["_highlight"] = ""
             st.error("No matching Tag ID found.")
-    else:
-        df["_highlight"] = ""
 
     def highlight_row(row):
-        return [row["_highlight"]]*6
+        return [row.get("_highlight", "")] * len(row.drop(labels='_highlight'))
 
     st.dataframe(df.drop(columns=["_highlight"]).style.apply(highlight_row, axis=1))
 
