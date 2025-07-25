@@ -31,17 +31,28 @@ with st.form("entry_form"):
     submitted = st.form_submit_button("Add Entry")
 
 if submitted:
-    if not swine_id.isdigit() or len(swine_id) != 10:
-        st.error("ID must be exactly 10 digits.")
+    if not swine_id.isdigit() or len(swine_id) > 10:
+        st.error("ID must be numeric and up to 10 digits.")
     elif not location:
         st.error("Location is required.")
     else:
+        tag_id = generate_tag_id(breed, swine_id)
+        # Check for duplicate
+        is_duplicate = any(row[1] == tag_id and row[0] == location for row in st.session_state.data)
+        if is_duplicate:
+            st.warning(f"Duplicate entry for Tag ID {tag_id}. Entry not added.")
+        else:
         tag_id = generate_tag_id(breed, swine_id)
         st.session_state.data.append([location, tag_id, swine_id, breed, bt if bt == "bt" else "", comment])
         st.session_state.last_location = location
         st.session_state.last_breed = breed
         st.session_state.last_bt = bt
         st.success(f"Saved: {tag_id}")
+
+# --- Entry Control ---
+if st.button("🗑 Clear All Entries"):
+    st.session_state.data.clear()
+    st.success("All entries have been cleared.")
 
 # --- Display Table ---
 if st.session_state.data:
