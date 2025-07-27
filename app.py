@@ -49,10 +49,28 @@ if submitted:
             st.session_state.last_bt = bt
             st.success(f"Saved: {tag_id}")
 
-# --- Delete Single Entry ---
+# --- Search and Highlight by ID ---
+highlighted_index = None
 if st.session_state.data:
     df = pd.DataFrame(st.session_state.data, columns=["Location", "Tag ID", "ID", "Breed", "BT", "Comment"])
 
+    with st.container():
+        with st.form("search_form", clear_on_submit=False):
+            search_id = st.text_input("🔍 Search by ID", key="search_id")
+            search_submit = st.form_submit_button("Search")
+        if search_submit and search_id:
+            try:
+                search_id = str(int(search_id))  # clean input
+                matches = df[df["ID"] == search_id]
+                if not matches.empty:
+                    highlighted_index = matches.index[0]
+                    st.success(f"Found ID: {search_id}")
+                else:
+                    st.warning("No matching ID found.")
+            except:
+                st.error("Please enter a numeric ID.")
+
+# --- Delete Single Entry ---
     delete_options = [f"{i+1}. {row[0]} | {row[1]}" for i, row in enumerate(st.session_state.data)]
     to_delete = st.selectbox("❌ Delete a specific entry:", options=["None"] + delete_options)
     if to_delete != "None":
@@ -61,9 +79,13 @@ if st.session_state.data:
             deleted = st.session_state.data.pop(index)
             st.success(f"Deleted entry: {deleted[1]} from {deleted[0]}")
 
-    st.dataframe(df)
+# --- Display with Highlight ---
+    def highlight_row(row):
+        return ['background-color: yellow' if row.name == highlighted_index else '' for _ in row]
 
-    # --- Export Section ---
+    st.dataframe(df.style.apply(highlight_row, axis=1))
+
+# --- Export Section ---
     pivot = df.pivot_table(index="Location", columns="Breed", aggfunc="size", fill_value=0)
     xlsx_file = to_excel(df, pivot)
     st.download_button("📥 Export to Excel", data=xlsx_file, file_name="swine_selection.xlsx")
